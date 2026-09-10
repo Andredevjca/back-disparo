@@ -1,0 +1,84 @@
+# =========================================================
+# BACKEND (DisparoApi C# + backend-node legado)
+# Este .gitignore cobre ambos os subprojetos.
+# =========================================================
+
+## ============== .NET / C# (DisparoApi) ==============
+
+### Build output (gerado via dotnet build/publish)
+bin/
+obj/
+Debug/
+Release/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+ARM/
+ARM64/
+bld/
+log/
+logs/
+publish/
+out/
+
+### IDEs — Visual Studio / Rider (per-user)
+.vs/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.sln.iml
+.vsconfig
+*.VC.db
+*.VC.opendb
+*.VC.db-shm
+*.VC.db-wal
+*.sdf
+*.opensdf
+
+### NuGet / restore cache
+packages/
+project.assets.json
+project.nuget.cache
+*.nupkg
+project.lock.json
+
+### User secrets / user overrides
+### (mantém apenas appsettings.json e appsettings.Development.json versionados)
+appsettings.Local.json
+appsettings.User.json
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json
+secrets.json
+
+### Testes
+TestResults/
+*.trx
+*.coverage
+
+### Build gerados
+*.GeneratedMSBuildEditorConfig.cs
+
+## ============== Node.js (backend-node legado) ==============
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+build/
+out/
+
+## ============== Comum ==============
+*.db
+*.sqlite
+*.sqlite3
+data/
+.DS_Store
+Thumbs.db
+.env
+.env.*
+!.env.example
