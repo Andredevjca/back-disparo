@@ -32,7 +32,7 @@ public class EnviosController : ControllerBase
         }
     }
 
-    [HttpPost("unitaria")]
+    [HttpPost("unitario")]
     [ProducesResponseType(typeof(EnvioUnitarioResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorMessageResponse), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> EnviarUnitario([FromBody] EnvioUnitarioRequest req)
