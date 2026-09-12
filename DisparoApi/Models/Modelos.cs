@@ -64,6 +64,8 @@ public class EnvioDetalhe
 {
     public int Id { get; set; }
     public int EnvioId { get; set; }
+    public int? GrupoImportacaoId { get; set; }
+    public int? UsuarioId { get; set; }
     public string? Nome { get; set; }
     public string Telefone { get; set; } = string.Empty;
     public string? Mensagem { get; set; }
@@ -71,6 +73,7 @@ public class EnvioDetalhe
     public string? Erro { get; set; }
     public string? EvolutionId { get; set; }
     public string? NumeroOrigem { get; set; }
+    public int? MensagemId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? EnviadoEm { get; set; }
 }
@@ -139,4 +142,82 @@ public class ContatoImportado
     public string? Dados { get; set; }
     public string StatusValidacao { get; set; } = StatusValidacaoContato.Valido;
     public DateTime CreatedAt { get; set; }
+}
+
+public static class StatusMensagem
+{
+    public const string Pendente = "PENDENTE";
+    public const string Enviada = "ENVIADA";
+    public const string Entregue = "ENTREGUE";
+    public const string Lida = "LIDA";
+    public const string Erro = "ERRO";
+}
+
+public static class DirecaoMensagem
+{
+    public const string Recebida = "RECEBIDA";
+    public const string Enviada = "ENVIADA";
+}
+
+public static class TipoMensagem
+{
+    public const string Texto = "TEXTO";
+    public const string Imagem = "IMAGEM";
+    public const string Audio = "AUDIO";
+    public const string Video = "VIDEO";
+    public const string Documento = "DOCUMENTO";
+    public const string Outro = "OUTRO";
+}
+
+public static class StatusConversa
+{
+    public const string Aberta = "ABERTA";
+    public const string Fechada = "FECHADA";
+}
+
+public class ContatoWhatsApp
+{
+    public int Id { get; set; }
+    public int? UsuarioId { get; set; }
+    public string Instancia { get; set; } = string.Empty;
+    public string Telefone { get; set; } = string.Empty;
+    public string? Nome { get; set; }
+    public string? NomeWhatsApp { get; set; }
+    public string? FotoUrl { get; set; }
+    public DateTime? UltimoAcesso { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+}
+
+public class Conversa
+{
+    public int Id { get; set; }
+    public int? ContatoWhatsAppId { get; set; }
+    public int? UsuarioId { get; set; }
+    public string Instancia { get; set; } = string.Empty;
+    public string Telefone { get; set; } = string.Empty;
+    public string? UltimaMensagem { get; set; }
+    public DateTime? UltimaMensagemEm { get; set; }
+    public int MensagensNaoLidas { get; set; }
+    public string Status { get; set; } = StatusConversa.Aberta;
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+}
+
+public class Mensagem
+{
+    public int Id { get; set; }
+    public int ConversaId { get; set; }
+    public int? UsuarioId { get; set; }
+    public int? EnvioDetalheId { get; set; }
+    public string? EvolutionId { get; set; }
+    public string Telefone { get; set; } = string.Empty;
+    public string Instancia { get; set; } = string.Empty;
+    public string Tipo { get; set; } = TipoMensagem.Texto;
+    public string Direcao { get; set; } = DirecaoMensagem.Recebida;
+    public string? Conteudo { get; set; }
+    public string Status { get; set; } = StatusMensagem.Pendente;
+    public DateTime? DataMensagem { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public string? Erro { get; set; }
 }

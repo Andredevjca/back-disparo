@@ -6,6 +6,7 @@ using DisparoApi.Options;
 using DisparoApi.Data;
 using DisparoApi.Repositories;
 using DisparoApi.Services;
+using DisparoApi.Dtos;
 
 DefaultTypeMap.MatchNamesWithUnderscores = true;
 
@@ -116,6 +117,9 @@ builder.Services.AddScoped<IImportacaoRepository, ImportacaoRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEnvioService, EnvioService>();
 builder.Services.AddScoped<IImportacaoService, ImportacaoService>();
+builder.Services.AddScoped<IAtendimentoRepository, AtendimentoRepository>();
+builder.Services.AddScoped<IAtendimentoService, AtendimentoService>();
+builder.Services.AddSingleton<SincroniaMonitor>();
 builder.Services.AddSingleton<IEnvioMassaJobManager, EnvioMassaJobManager>();
 builder.Services.AddHttpClient<IEvolutionApiService, EvolutionApiService>();
 builder.Services.AddAuthorization();

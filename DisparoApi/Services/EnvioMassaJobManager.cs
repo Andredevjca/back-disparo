@@ -56,6 +56,7 @@ public class EnvioMassaJobManager : IEnvioMassaJobManager
         using var scope = _scopeFactory.CreateScope();
         var envios = scope.ServiceProvider.GetRequiredService<IEnvioRepository>();
         var evolution = scope.ServiceProvider.GetRequiredService<IEvolutionApiService>();
+        var atendimento = scope.ServiceProvider.GetRequiredService<IAtendimentoService>();
 
         try
         {
@@ -75,6 +76,9 @@ public class EnvioMassaJobManager : IEnvioMassaJobManager
                 }
 
                 var proximo = pendentes[0];
+                bool envioOk = false;
+                string? evoId = null;
+                string? erroEnvio = null;
 
                 try
                 {
@@ -82,6 +86,10 @@ public class EnvioMassaJobManager : IEnvioMassaJobManager
 
                     var (ok, evolutionId, numeroOrigem, erro) = await evolution.EnviarMensagemAsync(
                         instance, proximo.telefone, proximo.mensagem ?? string.Empty);
+
+                    envioOk = ok;
+                    evoId = evolutionId;
+                    erroEnvio = ok ? null : erro;
 
                     await envios.AtualizarStatusDetalheAsync(proximo.id,
                         ok ? StatusDetalhe.Enviado : StatusDetalhe.Erro,
@@ -97,7 +105,27 @@ public class EnvioMassaJobManager : IEnvioMassaJobManager
                 }
                 catch (Exception ex)
                 {
+                    envioOk = false;
+                    erroEnvio = ex.Message;
                     await envios.AtualizarStatusDetalheAsync(proximo.id, StatusDetalhe.Erro, ex.Message, null);
+                }
+
+                try
+                {
+                    await atendimento.AssociarMensagemDisparoAsync(
+                        instance,
+                        proximo.telefone,
+                        proximo.id,
+                        evoId,
+                        DirecaoMensagem.Enviada,
+                        proximo.mensagem ?? string.Empty,
+                        envioOk ? StatusMensagem.Enviada : StatusMensagem.Erro,
+                        DateTime.Now,
+                        erroEnvio);
+                }
+                catch
+                {
+                    // Nunca quebrar o loop de disparo por erro de associação ao atendimento
                 }
 
                 await envios.AtualizarContagensEnvioAsync(envioId);

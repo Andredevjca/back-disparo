@@ -15,6 +15,7 @@ public class EnvioService : IEnvioService
     private readonly IEvolutionApiService _evolution;
     private readonly IEnvioMassaJobManager _jobs;
     private readonly IImportacaoRepository _importacoes;
+    private readonly IAtendimentoService _atendimento;
     private readonly DefaultsOptions _defaults;
 
     public EnvioService(
@@ -24,6 +25,7 @@ public class EnvioService : IEnvioService
         IEvolutionApiService evolution,
         IEnvioMassaJobManager jobs,
         IImportacaoRepository importacoes,
+        IAtendimentoService atendimento,
         IOptions<DefaultsOptions> defaults)
     {
         _envios = envios;
@@ -32,6 +34,7 @@ public class EnvioService : IEnvioService
         _evolution = evolution;
         _jobs = jobs;
         _importacoes = importacoes;
+        _atendimento = atendimento;
         _defaults = defaults.Value;
     }
 
@@ -102,6 +105,24 @@ public class EnvioService : IEnvioService
         var statusFinal = ok ? StatusDetalhe.Enviado : StatusDetalhe.Erro;
 
         await _envios.AtualizarDetalheUnitarioAsync(detalheId, statusFinal, ok ? null : erro, evolutionId);
+
+        try
+        {
+            await _atendimento.AssociarMensagemDisparoAsync(
+                instance,
+                telefone,
+                detalheId,
+                evolutionId,
+                DirecaoMensagem.Enviada,
+                mensagem,
+                ok ? StatusMensagem.Enviada : StatusMensagem.Erro,
+                DateTime.Now,
+                ok ? null : erro);
+        }
+        catch
+        {
+            // Ignora erros de associação para não quebrar o fluxo de disparo
+        }
 
         return new EnvioUnitarioResponse
         {

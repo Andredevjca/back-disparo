@@ -295,6 +295,9 @@ public class EnvioDetalheResponse
 
     [JsonPropertyName("envio_origem")]
     public string? EnvioOrigem { get; set; }
+
+    [JsonPropertyName("mensagem_id")]
+    public int? MensagemId { get; set; }
 }
 
 public class EnvioMassaGetResponse
@@ -452,4 +455,278 @@ public class EnvioPorGrupoRequest
 
     [JsonPropertyName("instance")]
     public string Instance { get; set; } = string.Empty;
+}
+
+public class ContatoWhatsAppResponse
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("instancia")]
+    public string Instancia { get; set; } = string.Empty;
+
+    [JsonPropertyName("telefone")]
+    public string Telefone { get; set; } = string.Empty;
+
+    [JsonPropertyName("nome")]
+    public string? Nome { get; set; }
+
+    [JsonPropertyName("nome_whatsapp")]
+    public string? NomeWhatsApp { get; set; }
+
+    [JsonPropertyName("foto_url")]
+    public string? FotoUrl { get; set; }
+
+    [JsonPropertyName("ultimo_acesso")]
+    public DateTime? UltimoAcesso { get; set; }
+
+    [JsonPropertyName("created_at")]
+    public DateTime CreatedAt { get; set; }
+
+    [JsonPropertyName("updated_at")]
+    public DateTime UpdatedAt { get; set; }
+}
+
+public class ConversaResponse
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("contato_whatsapp_id")]
+    public int? ContatoWhatsAppId { get; set; }
+
+    [JsonPropertyName("usuario_id")]
+    public int? UsuarioId { get; set; }
+
+    [JsonPropertyName("instancia")]
+    public string Instancia { get; set; } = string.Empty;
+
+    [JsonPropertyName("telefone")]
+    public string Telefone { get; set; } = string.Empty;
+
+    [JsonPropertyName("ultima_mensagem")]
+    public string? UltimaMensagem { get; set; }
+
+    [JsonPropertyName("ultima_mensagem_em")]
+    public DateTime? UltimaMensagemEm { get; set; }
+
+    [JsonPropertyName("mensagens_nao_lidas")]
+    public int MensagensNaoLidas { get; set; }
+
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = string.Empty;
+
+    [JsonPropertyName("nome")]
+    public string? Nome { get; set; }
+
+    [JsonPropertyName("nome_whatsapp")]
+    public string? NomeWhatsApp { get; set; }
+
+    [JsonPropertyName("foto_url")]
+    public string? FotoUrl { get; set; }
+
+    [JsonPropertyName("created_at")]
+    public DateTime CreatedAt { get; set; }
+
+    [JsonPropertyName("updated_at")]
+    public DateTime UpdatedAt { get; set; }
+}
+
+public class ConversaDetalheResponse
+{
+    [JsonPropertyName("conversa")]
+    public ConversaResponse Conversa { get; set; } = new();
+
+    [JsonPropertyName("contato")]
+    public ContatoWhatsAppResponse? Contato { get; set; }
+}
+
+public class ConversaPaginadaResponse
+{
+    [JsonPropertyName("page")]
+    public int Page { get; set; }
+
+    [JsonPropertyName("perPage")]
+    public int PerPage { get; set; }
+
+    [JsonPropertyName("total")]
+    public int Total { get; set; }
+
+    [JsonPropertyName("rows")]
+    public List<ConversaResponse> Rows { get; set; } = new();
+}
+
+public class MensagemResponse
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("conversa_id")]
+    public int ConversaId { get; set; }
+
+    [JsonPropertyName("usuario_id")]
+    public int? UsuarioId { get; set; }
+
+    [JsonPropertyName("envio_detalhe_id")]
+    public int? EnvioDetalheId { get; set; }
+
+    [JsonPropertyName("evolution_id")]
+    public string? EvolutionId { get; set; }
+
+    [JsonPropertyName("telefone")]
+    public string Telefone { get; set; } = string.Empty;
+
+    [JsonPropertyName("instancia")]
+    public string Instancia { get; set; } = string.Empty;
+
+    [JsonPropertyName("tipo")]
+    public string Tipo { get; set; } = string.Empty;
+
+    [JsonPropertyName("direcao")]
+    public string Direcao { get; set; } = string.Empty;
+
+    [JsonPropertyName("conteudo")]
+    public string? Conteudo { get; set; }
+
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = string.Empty;
+
+    [JsonPropertyName("data_mensagem")]
+    public DateTime? DataMensagem { get; set; }
+
+    [JsonPropertyName("created_at")]
+    public DateTime CreatedAt { get; set; }
+
+    [JsonPropertyName("erro")]
+    public string? Erro { get; set; }
+}
+
+public class MensagemPaginadaResponse
+{
+    [JsonPropertyName("page")]
+    public int Page { get; set; }
+
+    [JsonPropertyName("perPage")]
+    public int PerPage { get; set; }
+
+    [JsonPropertyName("total")]
+    public int Total { get; set; }
+
+    [JsonPropertyName("rows")]
+    public List<MensagemResponse> Rows { get; set; } = new();
+
+    [JsonPropertyName("tem_mais_antigas")]
+    public bool TemMaisAntigas { get; set; }
+}
+
+public class EnviarMensagemAtendimentoRequest
+{
+    [JsonPropertyName("texto")]
+    public string Texto { get; set; } = string.Empty;
+}
+
+public class SincroniaStatusResponse
+{
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = "PENDENTE";
+
+    [JsonPropertyName("iniciado_em")]
+    public DateTime? IniciadoEm { get; set; }
+
+    [JsonPropertyName("finalizado_em")]
+    public DateTime? FinalizadoEm { get; set; }
+
+    [JsonPropertyName("total_contatos")]
+    public int TotalContatos { get; set; }
+
+    [JsonPropertyName("total_conversas")]
+    public int TotalConversas { get; set; }
+
+    [JsonPropertyName("total_mensagens")]
+    public int TotalMensagens { get; set; }
+
+    [JsonPropertyName("erro")]
+    public string? Erro { get; set; }
+
+    [JsonPropertyName("conversas_com_erro")]
+    public int ConversasComErro { get; set; }
+}
+
+public class SincroniaMonitor
+{
+    private readonly object _lock = new();
+    private SincroniaStatusResponse _ultimo = new() { Status = "PENDENTE" };
+
+    public SincroniaStatusResponse UltimoStatus
+    {
+        get { lock (_lock) return _ultimo; }
+    }
+
+    public bool EstaRodando { get; private set; }
+
+    public DateTime? IniciadoEm { get; private set; }
+
+    public void MarcarInicio()
+    {
+        lock (_lock)
+        {
+            EstaRodando = true;
+            IniciadoEm = DateTime.Now;
+            _ultimo = new SincroniaStatusResponse
+            {
+                Status = "EM_ANDAMENTO",
+                IniciadoEm = IniciadoEm,
+                TotalContatos = _ultimo.TotalContatos,
+                TotalConversas = _ultimo.TotalConversas,
+                TotalMensagens = _ultimo.TotalMensagens,
+            };
+        }
+    }
+
+    public void AtualizarContadores(int totalContatos, int totalConversas, int totalMensagens, int conversasComErro = 0, string? erro = null)
+    {
+        lock (_lock)
+        {
+            _ultimo.TotalContatos = totalContatos;
+            _ultimo.TotalConversas = totalConversas;
+            _ultimo.TotalMensagens = totalMensagens;
+            _ultimo.ConversasComErro = conversasComErro;
+            if (!string.IsNullOrWhiteSpace(erro)) _ultimo.Erro = erro;
+        }
+    }
+
+    public void MarcarFim(bool ok, string? erro = null, int conversasComErro = 0)
+    {
+        lock (_lock)
+        {
+            EstaRodando = false;
+            _ultimo.Status = ok ? "OK" : "ERRO";
+            _ultimo.FinalizadoEm = DateTime.Now;
+            _ultimo.ConversasComErro = conversasComErro;
+            if (!string.IsNullOrWhiteSpace(erro)) _ultimo.Erro = erro;
+            else if (!ok && string.IsNullOrWhiteSpace(_ultimo.Erro)) _ultimo.Erro = "Falha na sincronização";
+        }
+    }
+
+    public void Restaurar(SincroniaStatusResponse salvo)
+    {
+        if (salvo == null) return;
+        lock (_lock)
+        {
+            _ultimo = new SincroniaStatusResponse
+            {
+                Status = salvo.Status,
+                IniciadoEm = salvo.IniciadoEm,
+                FinalizadoEm = salvo.FinalizadoEm,
+                TotalContatos = salvo.TotalContatos,
+                TotalConversas = salvo.TotalConversas,
+                TotalMensagens = salvo.TotalMensagens,
+                ConversasComErro = salvo.ConversasComErro,
+                Erro = salvo.Erro
+            };
+            IniciadoEm = salvo.IniciadoEm;
+            EstaRodando = string.Equals(salvo.Status, "EM_ANDAMENTO", StringComparison.OrdinalIgnoreCase) ||
+                          string.Equals(salvo.Status, "SINCRONIZANDO", StringComparison.OrdinalIgnoreCase);
+        }
+    }
 }
