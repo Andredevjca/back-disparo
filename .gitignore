@@ -82,3 +82,7 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+
+# Código de acesso e inicialização do banco
+!DisparoApi/Data/
+!DisparoApi/Data/*.cs

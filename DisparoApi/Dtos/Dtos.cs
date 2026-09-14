@@ -116,6 +116,8 @@ public class ContaWhatsAppCreateDto
 
 public class EnvioUnitarioRequest
 {
+    public ImagemEnvioDto? Imagem { get; set; }
+
     [JsonPropertyName("telefone")]
     public string Telefone { get; set; } = string.Empty;
 
@@ -173,6 +175,8 @@ public class ContatoMassaDto
 
 public class EnvioMassaRequest
 {
+    public ImagemEnvioDto? Imagem { get; set; }
+
     [JsonPropertyName("contatos")]
     public List<ContatoMassaDto> Contatos { get; set; } = new();
 
@@ -441,6 +445,8 @@ public class GrupoDetalhePaginadoResponse
 
 public class EnvioPorGrupoRequest
 {
+    public ImagemEnvioDto? Imagem { get; set; }
+
     [JsonPropertyName("templateId")]
     public int? TemplateId { get; set; }
 

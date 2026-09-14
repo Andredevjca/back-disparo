@@ -297,13 +297,17 @@ public class EvolutionApiService : IEvolutionApiService
         }
     }
 
-    public async Task<(bool ok, string? evolutionId, string? numeroOrigem, string? erro)> EnviarMensagemAsync(string instance, string telefone, string mensagem)
+    public async Task<(bool ok, string? evolutionId, string? numeroOrigem, string? erro)> EnviarMensagemAsync(string instance, string telefone, string mensagem, DisparoApi.Dtos.ImagemEnvioDto? imagem = null)
     {
         if (string.IsNullOrWhiteSpace(_options.ApiKey))
             return (false, null, null, "Evolution API Key não configurada. Edite appsettings.json: Evolution > ApiKey.");
         try
         {
-            var body = new
+            object body = imagem != null ? new
+            {
+                number = telefone, mediatype = "image", mimetype = imagem.MimeType,
+                caption = mensagem, media = imagem.Base64, fileName = imagem.NomeArquivo
+            } : new
             {
                 number = telefone,
                 text = mensagem,
@@ -312,7 +316,7 @@ public class EvolutionApiService : IEvolutionApiService
             };
             var json = JsonSerializer.Serialize(body);
             using var content = new StringContent(json, Encoding.UTF8, "application/json");
-            using var response = await _httpClient.PostAsync($"message/sendText/{Uri.EscapeDataString(instance)}", content);
+            using var response = await _httpClient.PostAsync($"message/{(imagem == null ? "sendText" : "sendMedia")}/{Uri.EscapeDataString(instance)}", content);
             var raw = await response.Content.ReadAsStringAsync();
 
             if (!response.IsSuccessStatusCode)

@@ -4,6 +4,8 @@ namespace DisparoApi.Repositories;
 
 public interface IEnvioRepository
 {
+    Task SalvarImagemAsync(int envioId, ImagemEnvioDto imagem);
+    Task<ImagemEnvioDto?> ObterImagemAsync(int envioId);
     Task<(int envioId, int detalheId)> CriarEnvioUnitarioAsync(
         int usuarioId,
         string tipo,

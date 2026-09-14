@@ -40,6 +40,7 @@ public class EnvioService : IEnvioService
 
     public async Task<EnvioUnitarioResponse> EnviarUnitarioAsync(int usuarioId, EnvioUnitarioRequest req)
     {
+        req.Imagem?.Validar();
         var instance = string.IsNullOrWhiteSpace(req.Instance) ? "meu-whatsapp" : req.Instance;
         string? templateNome = req.TemplateNome;
         var mensagem = req.Mensagem ?? string.Empty;
@@ -58,6 +59,9 @@ public class EnvioService : IEnvioService
         if (!string.IsNullOrWhiteSpace(req.Nome))
             dados["nome"] = req.Nome;
         mensagem = InterpolacaoHelper.Interpolar(mensagem, dados);
+
+        if (string.IsNullOrWhiteSpace(mensagem) && req.Imagem == null)
+            throw new ArgumentException("Informe uma mensagem ou uma imagem.");
 
         var (telOk, telefone, telMotivo) = TelefoneHelper.NormalizarTelefone(req.Telefone);
 
@@ -88,6 +92,8 @@ public class EnvioService : IEnvioService
             mensagem,
             statusDetalhe);
 
+        if (req.Imagem != null) await _envios.SalvarImagemAsync(envioId, req.Imagem);
+
         if (!telOk)
         {
             await _envios.AtualizarDetalheUnitarioAsync(detalheId, StatusDetalhe.Erro, erroInicial, null);
@@ -101,7 +107,7 @@ public class EnvioService : IEnvioService
             };
         }
 
-        var (ok, evolutionId, numeroOrigem, erro) = await _evolution.EnviarMensagemAsync(instance, telefone, mensagem);
+        var (ok, evolutionId, numeroOrigem, erro) = await _evolution.EnviarMensagemAsync(instance, telefone, mensagem, req.Imagem);
         var statusFinal = ok ? StatusDetalhe.Enviado : StatusDetalhe.Erro;
 
         await _envios.AtualizarDetalheUnitarioAsync(detalheId, statusFinal, ok ? null : erro, evolutionId);
@@ -141,6 +147,7 @@ public class EnvioService : IEnvioService
         if (req.Contatos == null || req.Contatos.Count == 0)
             throw new ArgumentException("Nenhum contato informado");
 
+        req.Imagem?.Validar();
         var instance = string.IsNullOrWhiteSpace(req.Instance) ? "meu-whatsapp" : req.Instance;
 
         int intervaloMs;
@@ -164,6 +171,9 @@ public class EnvioService : IEnvioService
                 templateNome ??= tpl.Nome;
             }
         }
+
+        if (string.IsNullOrWhiteSpace(mensagemBase) && req.Imagem == null)
+            throw new ArgumentException("Informe uma mensagem ou uma imagem.");
 
         var detalhes = new List<(string? nome, string telefone, string mensagem, string status, string numeroOrigem)>();
         foreach (var c in req.Contatos)
@@ -195,6 +205,8 @@ public class EnvioService : IEnvioService
             instance,
             string.Empty);
 
+        if (req.Imagem != null) await _envios.SalvarImagemAsync(envioId, req.Imagem);
+
         if (detalhes.Count > 0)
             await _envios.InserirDetalhesMassaAsync(envioId, usuarioId, null, detalhes);
 
@@ -217,6 +229,7 @@ public class EnvioService : IEnvioService
         if (contatos.Count == 0)
             throw new ArgumentException("Nenhum contato válido neste grupo para envio");
 
+        req.Imagem?.Validar();
         var instance = string.IsNullOrWhiteSpace(req.Instance) ? "meu-whatsapp" : req.Instance;
 
         int intervaloMs;
@@ -240,6 +253,9 @@ public class EnvioService : IEnvioService
                 templateNome ??= tpl.Nome;
             }
         }
+
+        if (string.IsNullOrWhiteSpace(mensagemBase) && req.Imagem == null)
+            throw new ArgumentException("Informe uma mensagem ou uma imagem.");
 
         var detalhes = new List<(string? nome, string telefone, string mensagem, string status, string numeroOrigem)>();
         foreach (var c in contatos)
@@ -273,6 +289,8 @@ public class EnvioService : IEnvioService
             grupoId);
 
         await _importacoes.AtualizarEnvioGrupoIdAsync(envioId, grupoId);
+
+        if (req.Imagem != null) await _envios.SalvarImagemAsync(envioId, req.Imagem);
 
         if (detalhes.Count > 0)
             await _envios.InserirDetalhesMassaAsync(envioId, usuarioId, grupoId, detalhes);

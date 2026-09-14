@@ -14,6 +14,18 @@ public class EnvioRepository : IEnvioRepository
         _factory = factory;
     }
 
+    public async Task SalvarImagemAsync(int envioId, ImagemEnvioDto imagem)
+    {
+        using var conn = _factory.Create();
+        await conn.ExecuteAsync("INSERT INTO envio_imagens (envio_id, base64, mime_type, nome_arquivo) VALUES (@envioId, @Base64, @MimeType, @NomeArquivo)",
+            new { envioId, imagem.Base64, imagem.MimeType, imagem.NomeArquivo });
+    }
+    public async Task<ImagemEnvioDto?> ObterImagemAsync(int envioId)
+    {
+        using var conn = _factory.Create();
+        return await conn.QuerySingleOrDefaultAsync<ImagemEnvioDto>("SELECT base64 AS Base64, mime_type AS MimeType, nome_arquivo AS NomeArquivo FROM envio_imagens WHERE envio_id = @envioId", new { envioId });
+    }
+
     public async Task<(int envioId, int detalheId)> CriarEnvioUnitarioAsync(
         int usuarioId,
         string tipo,

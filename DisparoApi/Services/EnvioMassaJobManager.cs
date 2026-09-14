@@ -60,6 +60,7 @@ public class EnvioMassaJobManager : IEnvioMassaJobManager
 
         try
         {
+            var imagem = await envios.ObterImagemAsync(envioId);
             while (!state.Cts.IsCancellationRequested)
             {
                 if (state.PararSolicitado)
@@ -85,7 +86,7 @@ public class EnvioMassaJobManager : IEnvioMassaJobManager
                     await envios.AtualizarStatusDetalheAsync(proximo.id, StatusDetalhe.Enviando, null, null);
 
                     var (ok, evolutionId, numeroOrigem, erro) = await evolution.EnviarMensagemAsync(
-                        instance, proximo.telefone, proximo.mensagem ?? string.Empty);
+                        instance, proximo.telefone, proximo.mensagem ?? string.Empty, imagem);
 
                     envioOk = ok;
                     evoId = evolutionId;
