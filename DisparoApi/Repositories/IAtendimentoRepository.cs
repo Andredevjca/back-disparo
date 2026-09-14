@@ -4,6 +4,7 @@ namespace DisparoApi.Repositories;
 
 public interface IAtendimentoRepository
 {
+    Task<ImagemEnvioDto?> ObterImagemMensagemAsync(int conversaId, int mensagemId);
     Task<ConversaPaginadaResponse> ListarConversasAsync(int usuarioId, string role, string? busca, int page, int perPage);
 
     Task<ConversaDetalheResponse?> ObterConversaAsync(int id, int usuarioId, string role);

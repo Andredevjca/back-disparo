@@ -117,6 +117,18 @@ public class AtendimentoRepository : IAtendimentoRepository
         return new ConversaDetalheResponse { Conversa = conversa, Contato = contato };
     }
 
+    public async Task<ImagemEnvioDto?> ObterImagemMensagemAsync(int conversaId, int mensagemId)
+    {
+        using var conn = _factory.Create();
+        return await conn.QueryFirstOrDefaultAsync<ImagemEnvioDto>(@"
+            SELECT i.base64 AS Base64, i.mime_type AS MimeType, i.nome_arquivo AS NomeArquivo
+            FROM mensagens m
+            JOIN envios_detalhes d ON (d.id = m.envio_detalhe_id OR d.evolution_id = m.evolution_id)
+            JOIN envios e ON e.id = d.envio_id AND e.instancia = m.instancia
+            JOIN envio_imagens i ON i.envio_id = e.id
+            WHERE m.id = @mensagemId AND m.conversa_id = @conversaId LIMIT 1", new { conversaId, mensagemId });
+    }
+
     public async Task<MensagemPaginadaResponse> ListarMensagensAsync(int conversaId, int page, int perPage, DateTime? antesDe = null)
     {
         page = Math.Max(1, page);
@@ -136,11 +148,15 @@ public class AtendimentoRepository : IAtendimentoRepository
         var sql = @"
             SELECT id, conversa_id AS ConversaId, usuario_id AS UsuarioId, envio_detalhe_id AS EnvioDetalheId,
                    evolution_id AS EvolutionId, telefone, instancia, tipo, direcao, conteudo, status,
-                   data_mensagem AS DataMensagem, created_at AS CreatedAt, erro
+                   data_mensagem AS DataMensagem, created_at AS CreatedAt, erro,
+                   EXISTS(SELECT 1 FROM envios_detalhes d
+                          JOIN envios e ON e.id = d.envio_id
+                          JOIN envio_imagens i ON i.envio_id = e.id
+                          WHERE (d.id = m.envio_detalhe_id OR (d.evolution_id = m.evolution_id AND e.instancia = m.instancia))) AS TemImagem
             FROM mensagens m
             WHERE m.conversa_id = @conversaId
               AND (@antesDe IS NULL OR m.data_mensagem < @antesDe)
-            ORDER BY COALESCE(m.data_mensagem, m.created_at) DESC
+            ORDER BY COALESCE(m.data_mensagem, m.created_at) DESC, m.id DESC
             LIMIT @perPage OFFSET @offset";
 
         var rows = (await conn.QueryAsync<MensagemResponse>(sql, new { conversaId, antesDe, perPage, offset })).AsList();

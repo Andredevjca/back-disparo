@@ -574,6 +574,9 @@ public class ConversaPaginadaResponse
 
 public class MensagemResponse
 {
+    [JsonPropertyName("tem_imagem")]
+    public bool TemImagem { get; set; }
+
     [JsonPropertyName("id")]
     public int Id { get; set; }
 

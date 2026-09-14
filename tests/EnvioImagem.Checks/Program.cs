@@ -1,3 +1,6 @@
+using DisparoApi.Data;
+using DisparoApi.Helpers;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Reflection;
 using DisparoApi.Repositories;
 using System.Net;
@@ -86,6 +89,46 @@ foreach (var mode in new[] { "template", "replacement", "removed" }) {
 Console.WriteLine("OK: imagem do template, substituição e remoção nos três fluxos de envio.");
 
 Console.WriteLine("OK: validação de imagem, payload de mídia, legenda, envio de texto e erro da Evolution.");
+
+
+var received = new List<object?[]>();
+var statusUpdates = new List<object?[]>();
+var canReadImage = false;
+var imageReads = 0;
+var chatRepo = Stub<IAtendimentoRepository>((m, a) => m.Name switch {
+    "CriarOuObterContatoAsync" => Task.FromResult(new ContatoWhatsAppResponse { Id = 1 }),
+    "CriarOuObterConversaAsync" => Task.FromResult(new ConversaResponse { Id = 2 }),
+    "ObterContatoImportadoPorTelefoneAsync" => Task.FromResult< (int? contatoImportadoId, string? nomeImportado)? >(null),
+    "InserirMensagemSeNaoExistirAsync" => CaptureMessage(a),
+    "AtualizarConversaPosMensagemAsync" => Task.CompletedTask,
+    "AtualizarStatusMensagemPorEvolutionIdAsync" => CaptureStatus(a),
+    "ObterConversaAsync" => Task.FromResult<ConversaDetalheResponse?>(canReadImage ? new ConversaDetalheResponse() : null),
+    "ObterImagemMensagemAsync" => ReadImage(),
+    _ => throw new Exception(m.Name)
+});
+Task<(bool, int?)> CaptureMessage(object?[] a) { received.Add(a); return Task.FromResult<(bool, int?)>((true, 1)); }
+Task CaptureStatus(object?[] a) { statusUpdates.Add(a); return Task.CompletedTask; }
+Task<ImagemEnvioDto?> ReadImage() { imageReads++; return Task.FromResult<ImagemEnvioDto?>(image); }
+var db = Stub<IDbConnectionFactory>((m, a) => throw new InvalidOperationException("No real database in tests"));
+var chatService = new AtendimentoService(chatRepo, service, new SincroniaMonitor(), Options.Create(new EvolutionOptions()), db);
+var incoming = new {
+    key = new { id = "reply-1", remoteJid = "123456789012345@lid", remoteJidAlt = "5585999999999@s.whatsapp.net", fromMe = false },
+    message = new { extendedTextMessage = new { text = "Resposta do cliente" } },
+    messageTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+};
+foreach (var data in new object[] { incoming, new[] { incoming }, new { messages = new[] { incoming } } }) {
+    using var payload = JsonDocument.Parse(JsonSerializer.Serialize(new { @event = "MESSAGES_UPSERT", instance = "conta", data }));
+    await chatService.ProcessarWebhookEventoAsync("conta", payload, NullLogger.Instance);
+}
+Check(received.Count == 3, "Webhook deve aceitar data objeto, array e data.messages");
+Check(received.All(a => (string)a[4]! == "5585999999999" && (string)a[7]! == "RECEBIDA" && (string)a[8]! == "Resposta do cliente"), "Resposta deve ir ao telefone correto, com texto e direção");
+using (var payload = JsonDocument.Parse(JsonSerializer.Serialize(new { @event = "messages.update", data = new { key = new { id = "reply-1" }, update = new { status = 3 } } })))
+    await chatService.ProcessarWebhookEventoAsync("conta", payload, NullLogger.Instance);
+Check((string)statusUpdates.Single()[2]! == "ENTREGUE", "Status numérico em update objeto");
+Check(await chatService.ObterImagemMensagemAsync(2, 1, 1, "user") == null && imageReads == 0, "Imagem exige acesso à conversa");
+canReadImage = true;
+Check(await chatService.ObterImagemMensagemAsync(2, 1, 1, "user") == image && imageReads == 1, "Imagem disponível para conversa autorizada");
+Console.WriteLine("OK: respostas via webhook, identidade alternativa, status e autorização da imagem.");
 
 class CaptureHandler : HttpMessageHandler {
     public string Path = "", Body = "";

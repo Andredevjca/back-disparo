@@ -35,6 +35,12 @@ public class AtendimentoService : IAtendimentoService
         _ = RestaurarMonitorPersistidoAsync();
     }
 
+    public async Task<ImagemEnvioDto?> ObterImagemMensagemAsync(int conversaId, int mensagemId, int usuarioId, string role)
+    {
+        if (await _repo.ObterConversaAsync(conversaId, usuarioId, role) == null) return null;
+        return await _repo.ObterImagemMensagemAsync(conversaId, mensagemId);
+    }
+
     public Task<ConversaPaginadaResponse> ListarConversasAsync(int usuarioId, string role, string? busca, int page, int perPage)
         => _repo.ListarConversasAsync(usuarioId, role, busca, page, perPage);
 
@@ -187,6 +193,8 @@ public class AtendimentoService : IAtendimentoService
         if (string.IsNullOrWhiteSpace(eventName))
             eventName = InferirEvento(root);
 
+        eventName = eventName?.Replace('_', '.').Replace('-', '.');
+
         logger.LogInformation("Webhook recebido. Instancia={Instancia} Evento={Evento}", instancia, eventName);
 
         if (string.Equals(eventName, "messages.upsert", StringComparison.OrdinalIgnoreCase) ||
@@ -243,6 +251,7 @@ public class AtendimentoService : IAtendimentoService
 
     private static string? InferirEvento(JsonElement root)
     {
+        if (EvolutionWebhookHelper.ExtrairMensagens(root).Count > 0) return "messages.upsert";
         if (root.TryGetProperty("messages", out var msgs) && msgs.ValueKind == JsonValueKind.Array) return "messages.upsert";
         if (root.TryGetProperty("key", out _) && root.TryGetProperty("update", out _)) return "messages.update";
         if (root.TryGetProperty("chats", out var chats) && chats.ValueKind == JsonValueKind.Array) return "chats.upsert";
@@ -416,17 +425,9 @@ public class AtendimentoService : IAtendimentoService
 
     private async Task ProcessarMensagensUpsert(string instancia, JsonElement root, ILogger logger)
     {
-        List<JsonElement> lista;
-        if (root.TryGetProperty("data", out var data) && data.TryGetProperty("messages", out var dataMsgs) &&
-            dataMsgs.ValueKind == JsonValueKind.Array)
-            lista = dataMsgs.EnumerateArray().ToList();
-        else if (root.TryGetProperty("messages", out var msgs) && msgs.ValueKind == JsonValueKind.Array)
-            lista = msgs.EnumerateArray().ToList();
-        else if (root.TryGetProperty("key", out _))
-            lista = new List<JsonElement> { root };
-        else
-        {
-            logger.LogWarning("Webhook sem array de mensagens encontrado (messages.upsert)");
+        var lista = EvolutionWebhookHelper.ExtrairMensagens(root);
+        if (lista.Count == 0) {
+            logger.LogWarning("Webhook sem mensagens reconhecidas. Instancia={Instancia}", instancia);
             return;
         }
 
@@ -525,14 +526,7 @@ public class AtendimentoService : IAtendimentoService
 
     private async Task ProcessarMensagensUpdate(string instancia, JsonElement root, ILogger logger)
     {
-        IEnumerable<JsonElement> enumeravel;
-        if (root.TryGetProperty("data", out var data) && data.TryGetProperty("messages", out var dataMsgs) &&
-            dataMsgs.ValueKind == JsonValueKind.Array)
-            enumeravel = dataMsgs.EnumerateArray();
-        else if (root.TryGetProperty("messages", out var msgs) && msgs.ValueKind == JsonValueKind.Array)
-            enumeravel = msgs.EnumerateArray();
-        else
-            enumeravel = new[] { root };
+        var enumeravel = EvolutionWebhookHelper.ExtrairMensagens(root);
 
         foreach (var msg in enumeravel)
         {
@@ -562,7 +556,10 @@ public class AtendimentoService : IAtendimentoService
         {
             if (key.TryGetProperty("id", out var idProp)) evolutionId = idProp.GetString();
             if (key.TryGetProperty("remoteJid", out var rj)) remoteJid = rj.GetString();
-            if (key.TryGetProperty("fromMe", out var fm)) fromMe = fm.GetBoolean();
+            if (key.TryGetProperty("fromMe", out var fm)) fromMe = fm.ValueKind == JsonValueKind.True;
+            var alternativo = EvolutionWebhookHelper.Texto(key, "remoteJidAlt");
+            if (remoteJid?.EndsWith("@lid") == true && alternativo?.EndsWith("@s.whatsapp.net") == true)
+                remoteJid = alternativo;
         }
 
         if (msg.TryGetProperty("messageID", out var mid))
@@ -639,6 +636,10 @@ public class AtendimentoService : IAtendimentoService
 
     private static string? ExtrairTextoDeMessage(JsonElement m)
     {
+        if (m.ValueKind != JsonValueKind.Object) return null;
+        foreach (var wrapper in new[] { "ephemeralMessage", "viewOnceMessage", "viewOnceMessageV2", "documentWithCaptionMessage" })
+            if (m.TryGetProperty(wrapper, out var wrapped) && wrapped.TryGetProperty("message", out var inner))
+                return ExtrairTextoDeMessage(inner);
         if (m.TryGetProperty("conversation", out var conv) && !string.IsNullOrWhiteSpace(conv.GetString()))
             return conv.GetString();
         if (m.TryGetProperty("extendedTextMessage", out var etm) && etm.TryGetProperty("text", out var etmText) && !string.IsNullOrWhiteSpace(etmText.GetString()))
@@ -715,39 +716,19 @@ public class AtendimentoService : IAtendimentoService
 
     private static string? ExtrairStatusDeUpdate(JsonElement msg)
     {
-        if (msg.TryGetProperty("update", out var upd))
-        {
-            var raw = upd.GetString()?.ToLowerInvariant();
-            if (raw == null)
-            {
-                if (upd.TryGetProperty("status", out var st)) raw = st.GetString()?.ToLowerInvariant();
-            }
-
-            return raw switch
-            {
-                "read" or "lida" or "lido" => StatusMensagem.Lida,
-                "delivered" or "delivered" or "entregue" => StatusMensagem.Entregue,
-                "sent" or "enviada" or "enviado" => StatusMensagem.Enviada,
-                "pending" or "pendente" => StatusMensagem.Pendente,
-                "error" or "erro" or "failed" => StatusMensagem.Erro,
-                _ => null
-            };
-        }
-
-        if (msg.TryGetProperty("status", out var statusProp))
-        {
-            var s = statusProp.GetString()?.ToLowerInvariant();
-            return s switch
-            {
-                "read" or "server_ack" or "readed" or "lida" => StatusMensagem.Lida,
-                "delivered" or "delivery_ack" or "entregue" => StatusMensagem.Entregue,
-                "sent" or "enviada" => StatusMensagem.Enviada,
-                "error" or "failed" or "erro" => StatusMensagem.Erro,
-                _ => null
-            };
-        }
-
-        return null;
+        var value = msg;
+        if (msg.TryGetProperty("update", out var update)) value = update;
+        if (value.ValueKind == JsonValueKind.Object && value.TryGetProperty("status", out var status)) value = status;
+        var raw = value.ValueKind == JsonValueKind.String ? value.GetString()?.ToLowerInvariant()
+            : value.ValueKind == JsonValueKind.Number ? value.GetRawText() : null;
+        return raw switch {
+            "read" or "readed" or "lida" or "lido" or "4" or "5" => StatusMensagem.Lida,
+            "delivered" or "delivery_ack" or "entregue" or "3" => StatusMensagem.Entregue,
+            "sent" or "server_ack" or "enviada" or "enviado" or "2" => StatusMensagem.Enviada,
+            "pending" or "pendente" or "1" => StatusMensagem.Pendente,
+            "error" or "failed" or "erro" or "0" => StatusMensagem.Erro,
+            _ => null
+        };
     }
 
     private static string? ExtrairTelefoneDoJid(string? jid)

@@ -5,6 +5,7 @@ namespace DisparoApi.Services;
 
 public interface IAtendimentoService
 {
+    Task<ImagemEnvioDto?> ObterImagemMensagemAsync(int conversaId, int mensagemId, int usuarioId, string role);
     Task<ConversaPaginadaResponse> ListarConversasAsync(int usuarioId, string role, string? busca, int page, int perPage);
 
     Task<ConversaDetalheResponse?> ObterConversaAsync(int id, int usuarioId, string role);

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using DisparoApi.Helpers;
 using DisparoApi.Models;
 using DisparoApi.Options;
 using DisparoApi.Services;
@@ -26,6 +27,7 @@ public class WebhookController : ControllerBase
     }
 
     [HttpPost("webhook")]
+    [HttpPost("webhook/{evento}")]
     public async Task<IActionResult> Webhook([FromQuery] string? instance, [FromHeader(Name = "apikey")] string? apiKeyHeader,
         CancellationToken ct)
     {
@@ -56,7 +58,8 @@ public class WebhookController : ControllerBase
                 {
                     var hdr = apiKeyHeader ?? Request.Headers["apikey"].FirstOrDefault()
                                                     ?? Request.Headers["x-api-key"].FirstOrDefault()
-                                                    ?? Request.Query["apikey"].FirstOrDefault();
+                                                    ?? Request.Query["apikey"].FirstOrDefault()
+                                                    ?? EvolutionWebhookHelper.Texto(doc.RootElement, "apikey");
                     if (!string.Equals(hdr, _opts.ApiKey, StringComparison.Ordinal))
                     {
                         _logger.LogWarning(
@@ -66,7 +69,9 @@ public class WebhookController : ControllerBase
                     }
                 }
 
-                await _atendimento.ProcessarWebhookEventoAsync(instancia ?? "default", doc, _logger);
+                if (string.IsNullOrWhiteSpace(instancia))
+                    return BadRequest(new { ok = false, erro = "Instância não informada" });
+                await _atendimento.ProcessarWebhookEventoAsync(instancia, doc, _logger);
                 return Ok(new { ok = true });
             }
         }
@@ -80,13 +85,10 @@ public class WebhookController : ControllerBase
     private static string? ExtrairInstancia(string? queryInstance, JsonElement root)
     {
         if (!string.IsNullOrWhiteSpace(queryInstance)) return queryInstance;
-        if (root.TryGetProperty("instance", out var inst)) return inst.GetString();
-        if (root.TryGetProperty("instanceName", out var iname)) return iname.GetString();
+        var value = EvolutionWebhookHelper.Texto(root, "instance") ?? EvolutionWebhookHelper.Texto(root, "instanceName");
+        if (!string.IsNullOrWhiteSpace(value)) return value;
         if (root.TryGetProperty("data", out var data))
-        {
-            if (data.TryGetProperty("instance", out var dInst)) return dInst.GetString();
-            if (data.TryGetProperty("instanceName", out var dIname)) return dIname.GetString();
-        }
+            return EvolutionWebhookHelper.Texto(data, "instance") ?? EvolutionWebhookHelper.Texto(data, "instanceName");
         return null;
     }
 }

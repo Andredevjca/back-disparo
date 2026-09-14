@@ -80,6 +80,15 @@ public class AtendimentoController : ControllerBase
         }
     }
 
+    [HttpGet("conversas/{id:int}/mensagens/{mensagemId:int}/imagem")]
+    public async Task<IActionResult> ObterImagem(int id, int mensagemId)
+    {
+        var imagem = await _service.ObterImagemMensagemAsync(id, mensagemId, UsuarioId, Role);
+        if (imagem == null) return NotFound();
+        Response.Headers.CacheControl = "private, max-age=3600";
+        return File(Convert.FromBase64String(imagem.Base64), imagem.MimeType);
+    }
+
     [HttpPost("conversas/{id:int}/mensagens")]
     public async Task<IActionResult> EnviarMensagem(int id, [FromBody] EnviarMensagemAtendimentoRequest req)
     {
