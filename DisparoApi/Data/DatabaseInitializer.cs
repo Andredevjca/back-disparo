@@ -63,6 +63,16 @@ public class DatabaseInitializer : IDatabaseInitializer
         ");
 
         await ExecuteAsync(conn, @"
+            CREATE TABLE IF NOT EXISTS template_imagens (
+                template_id INT PRIMARY KEY,
+                base64 LONGTEXT NOT NULL,
+                mime_type VARCHAR(50) NOT NULL,
+                nome_arquivo VARCHAR(255) NOT NULL,
+                FOREIGN KEY (template_id) REFERENCES templates(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        ");
+
+        await ExecuteAsync(conn, @"
             CREATE TABLE IF NOT EXISTS envios (
                 id INT PRIMARY KEY AUTO_INCREMENT,
                 usuario_id INT NULL,

@@ -71,6 +71,8 @@ public class UsuarioResponse
 
 public class TemplateCreateUpdateDto
 {
+    public ImagemEnvioDto? Imagem { get; set; }
+
     [JsonPropertyName("nome")]
     public string Nome { get; set; } = string.Empty;
 
@@ -80,6 +82,8 @@ public class TemplateCreateUpdateDto
 
 public class TemplateResponse
 {
+    public ImagemEnvioDto? Imagem { get; set; }
+
     [JsonPropertyName("id")]
     public int Id { get; set; }
 
@@ -116,6 +120,8 @@ public class ContaWhatsAppCreateDto
 
 public class EnvioUnitarioRequest
 {
+    public bool UsarImagemTemplate { get; set; } = true;
+
     public ImagemEnvioDto? Imagem { get; set; }
 
     [JsonPropertyName("telefone")]
@@ -175,6 +181,8 @@ public class ContatoMassaDto
 
 public class EnvioMassaRequest
 {
+    public bool UsarImagemTemplate { get; set; } = true;
+
     public ImagemEnvioDto? Imagem { get; set; }
 
     [JsonPropertyName("contatos")]
@@ -445,6 +453,8 @@ public class GrupoDetalhePaginadoResponse
 
 public class EnvioPorGrupoRequest
 {
+    public bool UsarImagemTemplate { get; set; } = true;
+
     public ImagemEnvioDto? Imagem { get; set; }
 
     [JsonPropertyName("templateId")]

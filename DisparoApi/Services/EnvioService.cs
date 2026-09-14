@@ -52,6 +52,7 @@ public class EnvioService : IEnvioService
             {
                 mensagem = tpl.Mensagem;
                 templateNome ??= tpl.Nome;
+                if (req.Imagem == null && req.UsarImagemTemplate) req.Imagem = tpl.Imagem;
             }
         }
 
@@ -169,6 +170,7 @@ public class EnvioService : IEnvioService
             {
                 mensagemBase = tpl.Mensagem;
                 templateNome ??= tpl.Nome;
+                if (req.Imagem == null && req.UsarImagemTemplate) req.Imagem = tpl.Imagem;
             }
         }
 
@@ -251,6 +253,7 @@ public class EnvioService : IEnvioService
             {
                 mensagemBase = tpl.Mensagem;
                 templateNome ??= tpl.Nome;
+                if (req.Imagem == null && req.UsarImagemTemplate) req.Imagem = tpl.Imagem;
             }
         }
 

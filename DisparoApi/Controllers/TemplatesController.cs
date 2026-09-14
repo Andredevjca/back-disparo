@@ -39,7 +39,10 @@ public class TemplatesController : ControllerBase
         if (string.IsNullOrWhiteSpace(dto.Nome) || string.IsNullOrWhiteSpace(dto.Mensagem))
             return BadRequest(new ErrorMessageResponse { Message = "Nome e mensagem são obrigatórios" });
 
-        var created = await _repository.CreateAsync(dto.Nome.Trim(), dto.Mensagem.Trim());
+        try { dto.Imagem?.Validar(); }
+        catch (ArgumentException ex) { return BadRequest(new ErrorMessageResponse { Message = ex.Message }); }
+
+        var created = await _repository.CreateAsync(dto.Nome.Trim(), dto.Mensagem.Trim(), dto.Imagem);
         return Created($"/api/modelos/{created.Id}", created);
     }
 
@@ -49,7 +52,10 @@ public class TemplatesController : ControllerBase
         if (string.IsNullOrWhiteSpace(dto.Nome) || string.IsNullOrWhiteSpace(dto.Mensagem))
             return BadRequest(new ErrorMessageResponse { Message = "Nome e mensagem são obrigatórios" });
 
-        var updated = await _repository.UpdateAsync(id, dto.Nome.Trim(), dto.Mensagem.Trim());
+        try { dto.Imagem?.Validar(); }
+        catch (ArgumentException ex) { return BadRequest(new ErrorMessageResponse { Message = ex.Message }); }
+
+        var updated = await _repository.UpdateAsync(id, dto.Nome.Trim(), dto.Mensagem.Trim(), dto.Imagem);
         if (updated == null)
             return NotFound();
         return Ok(updated);

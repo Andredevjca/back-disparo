@@ -16,3 +16,16 @@ Validacao local: dotnet run --project tests/EnvioImagem.Checks
 O teste simula HTTP; nao envia mensagens reais nem acessa o banco.
 Frontend: npm.cmd run build -- --configuration development
 Para confirmar a integracao real, usar uma conta Evolution conectada e um numero de teste.
+
+Templates com imagem
+
+POST/PUT /api/modelos aceitam o mesmo objeto imagem opcional. GET devolve a imagem salva.
+PUT com imagem null remove a imagem do template. Nome e mensagem continuam obrigatorios.
+A inicializacao cria template_imagens sem alterar os templates existentes.
+Texto e imagem do template sao gravados na mesma transacao.
+
+Nos tres endpoints de envio, imagem informada substitui a do template apenas no disparo.
+Sem imagem informada, usarImagemTemplate (padrao true) carrega a imagem do template.
+Para enviar apenas texto, passar imagem: null e usarImagemTemplate: false.
+As telas enviam a imagem exibida na previa com usarImagemTemplate: false, respeitando a remocao.
+Selecionar outro template carrega a imagem desse novo template.
